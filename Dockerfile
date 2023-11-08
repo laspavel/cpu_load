@@ -1,0 +1,15 @@
+FROM python:3.9.16
+
+WORKDIR /src
+
+ARG LS_DURATION
+ENV LS_DURATION ${LS_DURATION}
+
+ARG LS_LOADCPU
+ENV LS_LOADCPU ${PS_LOADCPU}
+
+ENV PYTHONUNBUFFERED 1
+
+COPY /src /src
+CMD [ "sh", "-c", "python -u /src/load_cpu.py ${LS_DURATION} ${LS_LOADCPU}"]
+
