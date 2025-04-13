@@ -1,18 +1,18 @@
 # CPU Load Generator
 
-cpu_load is a lightweight tool designed to simulate CPU load for testing and benchmarking purposes. It utilizes Python and Bash scripts, encapsulated within a Docker container, to generate controlled CPU stress.​
+A lightweight CPU stress-testing tool written in Python 3. Simulates configurable CPU load for benchmarking, diagnostics, or CI environments.
 
 ## 📌 Features
 
-* Simulates CPU load using Python-based computations​
-* Containerized with Docker for easy deployment​
-* Configurable parameters to adjust load intensity and duration​
-* Suitable for performance testing, benchmarking, and system behavior analysis​
+* Generate custom CPU load (1%–100%)
+* Control test duration (in seconds)
+* Load specific number of CPU cores
+* Clean interruption handling (Ctrl+C)
 
 ## ⚙️ Requirements
 
-* Docker installed on the host system​
-* Optional: Docker Compose for simplified orchestration​
+- Python 3.6 or newer
+- Linux, Windows
 
 ## 🚀 Installation & Usage
 
@@ -21,37 +21,35 @@ cpu_load is a lightweight tool designed to simulate CPU load for testing and ben
 ```bash
 git clone https://github.com/laspavel/cpu_load.git
 cd cpu_load
+chmod +x cpu_load.py
 ```
 
-### Build the Docker Image
+Python dependencies are only from the standard library, no installation of packages is required.
+
 
 ```bash
-./BuildImage.sh
+./cpu_load.py [-i INTERVAL] [-u UTILIZATION] [-c CPUS] [-v]
 ```
 
-### Run the Container
+Parameters:
+
+| Parameters         | Description                                           |  Default             |
+| ------------------ | ----------------------------------------------------- |  --------------------|
+| -i, --interval     | Duration in seconds to run the test                   |  30                  |
+| -u, --utilization  | CPU load percentage per core                          |  50                  |
+| -c, --cpus         | Number of CPU cores to load  (max = physical cores)   |  all available cores |
+| -v, --version      | Show program version and exit	                       |                      |
+
+## 🧩  Example Usage
 
 ```bash
-docker-compose up -d
+./load_cpu.py -i 60 -u 90 -c 2   # Run for 60 seconds at 90% load on 2 CPU cores
 ```
 
-This will start the container and begin generating CPU load based on the default configuration.​
-
-### Customize Load Parameters
-
-You can modify the docker-compose.yml file to adjust environment variables that control the load intensity and duration. For example:​
-
-```yaml
-environment:
-  - LOAD_DURATION=60  # Duration in seconds
-  - LOAD_INTENSITY=80 # Percentage of CPU load
-```
-
-After making changes, restart the container:​
+## Build binary file
 
 ```bash
-docker-compose down
-docker-compose up -d
+./build.sh
 ```
 
 ## 🧪 Testing the Load Script
@@ -59,8 +57,8 @@ docker-compose up -d
 If you prefer to run the load script directly on your host system:​
 
 ```bash
-chmod +x cpu_load.sh
-./cpu_load.sh
+chmod +x load_cpu.sh
+./load_cpu.py
 ```
 
 Note: Ensure that Python 3 is installed on your system.​
@@ -70,10 +68,8 @@ Note: Ensure that Python 3 is installed on your system.​
 cpu_load/
 ├── cron/                   # Cron job configurations (if any)
 ├── src/                    # Source code for load generation
-├── BuildImage.sh           # Script to build the Docker image
-├── Dockerfile              # Docker image definition
-├── docker-compose.yml      # Docker Compose configuration
-├── cpu_load.sh             # Shell script to initiate CPU load
+├── build.sh                # Script to build binary file
+├── Dockerfile.build        # Docker image for build binary file
 ├── LICENSE                 # MIT License
 └── README.md               # Project documentation
 ```

@@ -10,4 +10,4 @@ ENV AGVERSION=$AGVERSION
 COPY /src /src
 RUN sed -i "s|PRG_VERSION_GIT_UID_TAG|$AGVERSION|g" /src/load_cpu.py
 
-CMD ["pyinstaller", "--onefile", "--exclude-module","lzma", "--clean", "--distpath", "/dist","load_cpu.py"]
+CMD ["pyinstaller", "--onefile", "--exclude-module","lzma", "--clean", "--distpath", "/dist","cpu_load.py"]
