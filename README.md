@@ -1,6 +1,10 @@
 # CPU Load Generator
 
-A lightweight CPU stress-testing tool written in Python 3. Simulates configurable CPU load for benchmarking, diagnostics, or CI environments.
+![Python](https://img.shields.io/badge/python-3.6+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+A cross-platform CPU load generator for benchmarking and testing  
+Supports configurable utilization, duration, and number of cores.
 
 ## 📌 Features
 
@@ -16,20 +20,14 @@ A lightweight CPU stress-testing tool written in Python 3. Simulates configurabl
 
 ## 🚀 Installation & Usage
 
-### Clone the Repository
-
 ```bash
 git clone https://github.com/laspavel/cpu_load.git
 cd cpu_load
 chmod +x cpu_load.py
+./cpu_load.py [-i INTERVAL] [-u UTILIZATION] [-c CPUS] [-v]
 ```
 
 Python dependencies are only from the standard library, no installation of packages is required.
-
-
-```bash
-./cpu_load.py [-i INTERVAL] [-u UTILIZATION] [-c CPUS] [-v]
-```
 
 Parameters:
 
@@ -46,13 +44,13 @@ Parameters:
 ./load_cpu.py -i 60 -u 90 -c 2   # Run for 60 seconds at 90% load on 2 CPU cores
 ```
 
-## Build binary file
+## 🛠 Build Standalone Binary
 
 ```bash
 ./build.sh
 ```
 
-## 🧪 Testing the Load Script
+## 🧪 Testing Locally
 
 If you prefer to run the load script directly on your host system:​
 
@@ -61,12 +59,12 @@ chmod +x load_cpu.sh
 ./load_cpu.py
 ```
 
-Note: Ensure that Python 3 is installed on your system.​
+⚠️ Make sure Python 3 is installed and executable is marked with `chmod +x`.
 
 ## 📁 Project Structure
 ```plaintext
 cpu_load/
-├── cron/                   # Cron job configurations (if any)
+├── cron/                   # Example cron tasks for automated stress tests
 ├── src/                    # Source code for load generation
 ├── build.sh                # Script to build binary file
 ├── Dockerfile.build        # Docker image for build binary file
