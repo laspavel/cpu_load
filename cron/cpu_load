@@ -1,1 +1,1 @@
-00 * * * * opc cd /home/opc/scripts && ./cpu_load.sh
+00 * * * * opc cd /bin/cpu_load -i 3590 -u 23
