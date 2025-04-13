@@ -7,7 +7,7 @@ import sys
 import math
 import signal
 
-PROGRAM_VERSION="PRG_VERSION_GIT_UID_TAG"
+PROGRAM_VERSION="%(prog)s PRG_VERSION_GIT_UID_TAG"
 
 def generate_cpu_load(interval, utilization):
     """
@@ -32,7 +32,7 @@ def main():
                         help='Целевая загрузка CPU в %% (по умолчанию: 50)')
     parser.add_argument('-c', '--cpus', type=int, default=multiprocessing.cpu_count(),
                         help='Количество CPU ядер для нагрузки (по умолчанию: все доступные)')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s PROGRAM_VERSION')
+    parser.add_argument('-v', '--version', action='version', version=PROGRAM_VERSION)
     args = parser.parse_args()
 
     if not (1 <= args.utilization <= 100):
