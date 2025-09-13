@@ -1,71 +1,111 @@
 #!/usr/bin/env python3
-
 import time
 import argparse
-import multiprocessing
+import multiprocessing as mp
 import sys
 import math
 import signal
 
-PROGRAM_VERSION="%(prog)s PRG_VERSION_GIT_UID_TAG"
+PROGRAM_VERSION = "%(prog)s PRG_VERSION_GIT_UID_TAG"
 
-def generate_cpu_load(interval, utilization):
+def generate_cpu_load(interval, utilization, timeslice):
     """
     Генерация CPU-нагрузки заданного процента utilization на протяжении interval секунд.
-    Использует таймслоты по 100 мс.
+    Работает тайм-слотами длиной timeslice секунд.
     """
-    run_until = time.time() + interval
-    busy_time = utilization / 100.0 * 0.1  # активная часть таймслота
-    idle_time = 0.1 - busy_time            # пассивная часть таймслота
+    # Бесконечный режим
+    if interval == -1:
+        run_until = float("inf")
+    else:
+        run_until = time.perf_counter() + float(interval)
 
-    while time.time() < run_until:
-        start = time.time()
-        while (time.time() - start) < busy_time:
-            a = math.sqrt(64*64*64*64*64)
-        time.sleep(idle_time)
+    busy_time = (utilization / 100.0) * timeslice
+    idle_time = max(0.0, timeslice - busy_time)
+
+    # Небольшая «работа», не оптимизируемая в ноль
+    acc = 0.0
+    while time.perf_counter() < run_until:
+        start = time.perf_counter()
+        # активная фаза
+        while (time.perf_counter() - start) < busy_time:
+            acc += math.sqrt(acc * acc + 123.456) if acc else math.sqrt(123.456)
+            if acc > 1e6:
+                acc = 0.0
+        # пассивная фаза
+        if idle_time > 0:
+            time.sleep(idle_time)
 
 def main():
-    parser = argparse.ArgumentParser(description='Генерация заданной CPU-нагрузки для стресс-теста')
-    parser.add_argument('-i', '--interval', type=int, default=30,
-                        help='Продолжительность теста в секундах (по умолчанию: 30)')
-    parser.add_argument('-u', '--utilization', type=int, default=50,
-                        help='Целевая загрузка CPU в %% (по умолчанию: 50)')
-    parser.add_argument('-c', '--cpus', type=int, default=multiprocessing.cpu_count(),
-                        help='Количество CPU ядер для нагрузки (по умолчанию: все доступные)')
-    parser.add_argument('-v', '--version', action='version', version=PROGRAM_VERSION)
+    cpu_total = mp.cpu_count() or 1
+
+    parser = argparse.ArgumentParser(
+        description="Генерация заданной CPU-нагрузки для стресс-теста"
+    )
+    parser.add_argument(
+        "-i", "--interval", type=int, default=30,
+        help='Продолжительность теста в секундах (по умолчанию: 30), "-1" — бесконечно'
+    )
+    parser.add_argument(
+        "-u", "--utilization", type=int, default=50,
+        help="Целевая загрузка CPU в %% (по умолчанию: 50)"
+    )
+    parser.add_argument(
+        "-c", "--cpus", type=int, default=cpu_total,
+        help=f"Количество CPU ядер для нагрузки (по умолчанию: все доступные = {cpu_total})"
+    )
+    parser.add_argument(
+        "-t", "--timeslice", type=float, default=0.1,
+        help="Длительность тайм-слота в секундах (по умолчанию: 0.1)"
+    )
+    parser.add_argument("-v", "--version", action="version", version=PROGRAM_VERSION)
     args = parser.parse_args()
 
+    # Валидации
     if not (1 <= args.utilization <= 100):
-        sys.exit("Ошибка: значение утилизации должно быть от 1 до 100 процентов.")
-    if args.interval <= 0:
-        sys.exit("Ошибка: интервал должен быть положительным числом.")
-    if not (1 <= args.cpus <= multiprocessing.cpu_count()):
-        sys.exit(f"Ошибка: количество CPU должно быть от 1 до {multiprocessing.cpu_count()}.")
+        sys.exit("Ошибка: утилизация должна быть от 1 до 100 процентов.")
+    if not (args.interval == -1 or args.interval > 0):
+        sys.exit('Ошибка: интервал должен быть положительным числом или равен "-1".')
+    if not (1 <= args.cpus <= cpu_total):
+        sys.exit(f"Ошибка: количество CPU должно быть от 1 до {cpu_total}.")
+    if args.timeslice <= 0:
+        sys.exit("Ошибка: timeslice должен быть положительным числом.")
 
-    print(f"▶ Interval: {args.interval} сек")
+    print(f"▶ Interval: {'∞' if args.interval == -1 else args.interval} сек")
     print(f"▶ Target Utilization: {args.utilization}%")
-    print(f"▶ CPUs to load: {args.cpus}/{multiprocessing.cpu_count()}")
+    print(f"▶ CPUs to load: {args.cpus}/{cpu_total}")
+    print(f"▶ Timeslice: {args.timeslice:.3f} с")
 
-    # Обработка Ctrl+C
-    def handle_sigint(sig, frame):
-        print("\n⛔ Прерывание по Ctrl+C. Завершаем процессы...")
+    processes = []  # объявляем до установки обработчиков
+
+    def handle_stop(sig, frame):
+        print(f"\n⛔ Получен сигнал {signal.Signals(sig).name}. Завершаем процессы...")
         for p in processes:
-            p.terminate()
+            if p.is_alive():
+                p.terminate()
+        for p in processes:
+            p.join(timeout=2)
         sys.exit(0)
 
-    signal.signal(signal.SIGINT, handle_sigint)
+    # Обработка Ctrl+C и SIGTERM
+    signal.signal(signal.SIGINT, handle_stop)
+    try:
+        signal.signal(signal.SIGTERM, handle_stop)
+    except Exception:
+        # На некоторых платформах (Windows) SIGTERM может быть недоступен
+        pass
 
     # Запуск процессов нагрузки
-    processes = []
     for _ in range(args.cpus):
-        p = multiprocessing.Process(target=generate_cpu_load, args=(args.interval, args.utilization))
+        p = mp.Process(target=generate_cpu_load,
+                       args=(args.interval, args.utilization, args.timeslice))
         p.start()
         processes.append(p)
 
+    # Ожидание завершения
     for p in processes:
         p.join()
 
     print("✅ Нагрузочный тест завершён.")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

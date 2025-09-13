@@ -1,0 +1,37 @@
+[Unit]
+Description=CPU load generator
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/bin/cpu_load -i -1 -u 25
+Restart=always
+RestartSec=2s
+User=opc
+Group=opc
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cpuload
+
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+LockPersonality=true
+ProtectHostname=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX
+MemoryDenyWriteExecute=true
+
+KillSignal=SIGTERM
+TimeoutStopSec=5s
+
+[Install]
+WantedBy=multi-user.target
